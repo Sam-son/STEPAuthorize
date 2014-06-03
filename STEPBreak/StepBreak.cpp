@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 		if (line == "ENDSEC;") break;
 		outsig << line <<std::endl;
 	}
-	if (input.eof())
+	if (input.eof() || input.fail())
 	{
 		std::cout << "Malformed Signature\n";
 		return EXIT_FAILURE;
