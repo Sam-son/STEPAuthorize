@@ -59,6 +59,36 @@ int main(int argc, char *argv[])
 		std::cout << "Malformed Signature\n";
 		return EXIT_FAILURE;
 	}
+	bool readpub = false;
+	fname.clear();
+	fname.append(argv[1]);
+	fname.append(".pub");
+	std::ofstream outpub(fname);
+	if (!outpub)
+	{
+		std::cout << "Error opening public key for writing\n";
+		return EXIT_FAILURE;
+	}
+	while (!input.eof() && !input.fail())
+	{
+		getline(input, line);
+		if (line == "PUBLIC KEY;")
+		{
+			readpub = true;
+			getline(input, line);
+		}
+		if (readpub == true)
+		{
+			if (line == "ENDSEC;") break;
+			outpub << line;
+			outpub << '\n';
+		}
+	}
+	if (input.eof())
+	{
+		std::cout << "Malformed Signature\n";
+		return EXIT_FAILURE;
+	}
 	bool readcert = false;
 	fname.clear();
 	fname.append(argv[1]);

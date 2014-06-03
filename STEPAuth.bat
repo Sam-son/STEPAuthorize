@@ -23,8 +23,8 @@ set "data=%2.tmp"
 set "hash=%2.hash"
 set "pub=%2.pub"
 
-@openssl.exe x509 -pubkey -noout -in %certificate% >%pub%
-@openssl enc -d -base64 -in %signature% -out %signaturedec%
+openssl.exe x509 -pubkey -noout -in %certificate% >%pub%
+openssl enc -d -base64 -in %signature% -out %signaturedec%
 openssl.exe dgst -sha256 -verify %pub% -signature %signaturedec% %data%
 del %certificate% %signature% %signaturedec% %data% %hash% %pub%
 GOTO end
@@ -45,17 +45,30 @@ SET "outfile=signed_%2"
 openssl dgst -sha256 -sign %3 -out %signsig% %2
 openssl enc -base64 -in %signsig% |repl "\n" "\r\n" xm > %signsig64%
 copy %2 %outfile% >NUL
-::Print the Signature to outfile.
+::Print the Signature to outfile. Looks like:
+::SIGNATURE;
+::[bunch of lines of signature stuff]
+::ENDSEC;
 echo.>> %outfile%
 echo SIGNATURE^;>> %outfile%
 type %signsig64%>> %outfile%
 echo ENDSEC^;>> %outfile%
 echo.>> %outfile%
+::Print Public key. Gotten right from the certificate. 
+::Similar to Signature, section begins with:
+::PUBLIC KEY;
+echo PUBLIC KEY^;>> %outfile%
+openssl x509 -pubkey -noout -in %4 |repl "\n" "\r\n" xm >> %outfile%
+echo ENDSEC^;>>%outfile%
+echo.>> %outfile%
+::Print Certificate to file. Begins with:
+::CERTIFICATE;
 echo CERTIFICATE^;>> %outfile%
 type %4>> %outfile%
 echo.>> %outfile%
 echo ENDSEC^;>> %outfile%
 
+::Done with everything. Delete temporary files.
 del %signsig% %signsig64%
 GOTO end
 
