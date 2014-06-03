@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=640" />
+
+    <link rel="stylesheet" href="stylesheets/core.css" media="screen"/>
+    <link rel="stylesheet" href="stylesheets/mobile.css" media="handheld, only screen and (max-device-width:640px)"/>
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
+
+    <script type="text/javascript" src="javascripts/modernizr.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="javascripts/headsmart.min.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function () {
+        $('#main_content').headsmart()
+      })
+    </script>
+    <title>STEPAuthorize by Sam-son</title>
+  </head>
+
+  <body>
+    <a id="forkme_banner" href="https://github.com/Sam-son/STEPAuthorize">View on GitHub</a>
+    <div class="shell">
+
+      <header>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <h1>STEPAuthorize</h1>
+            <h2>Sign and Verify STEP files with ease</h2>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+      </header>
+
+      <section id="downloads">
+        <span class="inner">
+          <a href="https://github.com/Sam-son/STEPAuthorize/zipball/master" class="zip"><em>download</em> .ZIP</a><a href="https://github.com/Sam-son/STEPAuthorize/tarball/master" class="tgz"><em>download</em> .TGZ</a>
+        </span>
+      </section>
+
+
+      <span class="banner-fix"></span>
+
+
+      <section id="main_content">
+        <h3>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage:</h3>
+
+<pre><code>STEPAuth.bat SIGN &lt;file to sign&gt; &lt;private key&gt; &lt;certificate&gt;
+</code></pre>
+
+<p>-Outputs <code>signed_&lt;file to sign&gt;</code> which contains a signature, public key and certificate at the end.</p>
+
+<pre><code>STEPAuth.bat VERIFY &lt;signed file&gt;
+</code></pre>
+
+<p>Outputs Verification OK or Verification Failure.</p>
+
+<h3>
+<a name="included" class="anchor" href="#included"><span class="octicon octicon-link"></span></a>Included:</h3>
+
+<ul>
+<li>Sample Private Key <strong>privatekey_signing-ca.key</strong>
+</li>
+<li>Sample Certificate <strong>Certificate_signing-ca.cert</strong>
+</li>
+<li>Sample signed file <strong>signed_AS1-AC-214.stp</strong>
+</li>
+<li>Sample Certificate Authority chain of trust <strong>/ca</strong>
+</li>
+</ul><h3>
+<a name="author" class="anchor" href="#author"><span class="octicon octicon-link"></span></a>Author</h3>
+
+<p><a href="https://github.com/Sam-son" class="user-mention">@Sam-son</a></p>
+      </section>
+
+      <footer>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <p>this project by <a href="https://github.com/Sam-son">Sam-son</a> can be found on <a href="https://github.com/Sam-son/STEPAuthorize">GitHub</a></p>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+        <p>Generated with <a href="http://pages.github.com">GitHub Pages</a> using Merlot</p>
+        <span class="octocat"></span>
+      </footer>
+
+    </div>
+
+    
+  </body>
+</html>
