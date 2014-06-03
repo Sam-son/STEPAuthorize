@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	}
 	while (!input.eof() && !input.fail())
 	{
-		getline(input, line);
+		safeGetline(input, line);
 		if (line == "ENDSEC;") break;
 		outsig << line <<std::endl;
 	}
@@ -73,11 +73,11 @@ int main(int argc, char *argv[])
 	}
 	while (!input.eof() && !input.fail())
 	{
-		getline(input, line);
+		safeGetline(input, line);
 		if (line == "PUBLIC KEY;")
 		{
 			readpub = true;
-			getline(input, line);
+			safeGetline(input, line);
 		}
 		if (readpub == true)
 		{
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 			outpub << '\n';
 		}
 	}
-	if (input.eof())
+	if (input.eof() || input.fail())
 	{
 		std::cout << "Malformed Signature\n";
 		return EXIT_FAILURE;
@@ -103,11 +103,11 @@ int main(int argc, char *argv[])
 	}
 	while (!input.eof() && !input.fail())
 	{
-		getline(input, line);
+		safeGetline(input, line);
 		if (line == "CERTIFICATE;")
 		{
 			readcert = true;
-			getline(input, line);
+			safeGetline(input, line);
 		}
 		if (readcert == true)
 		{
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 			if (line == "-----END CERTIFICATE-----") break;
 		}
 	}
-	if (input.eof())
+	if (input.eof() || input.fail())
 	{
 		std::cout << "Malformed Signature\n";
 		return EXIT_FAILURE;
