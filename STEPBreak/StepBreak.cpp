@@ -2,6 +2,8 @@
 #include <fstream>
 #include <string>
 
+std::istream& safeGetline(std::istream& is, std::string& t);
+
 int main(int argc, char *argv[])
 {
 	if (argc < 2)
@@ -9,7 +11,7 @@ int main(int argc, char *argv[])
 		std::cout << "stepbreak.exe input.stp\n";
 		return EXIT_FAILURE;
 	}
-	std::ifstream input(argv[1]);
+	std::ifstream input(argv[1], std::ios::in | std::ios::binary);
 	if (!input)
 	{
 		std::cout << "Error reading file.\n";
@@ -24,14 +26,14 @@ int main(int argc, char *argv[])
 		std::cout << "error opening temporary file for writing.\n";
 		return EXIT_FAILURE;
 	}
-	int place = 0;
+	auto place = input.tellg();
 	while (!input.eof() && !input.fail())
 	{
-		getline(input, line);
+		safeGetline(input, line);
 		if (line == "SIGNATURE;") break;
 		tempout << line;
 		place=input.tellg();
-		getline(input, line);
+		safeGetline(input, line);
 		if (line != "SIGNATURE;") tempout << std::endl;	//This prevents a trailing \n at the end of the file.
 		input.seekg(place);
 	}
@@ -121,4 +123,37 @@ int main(int argc, char *argv[])
 	}
 
 	return EXIT_SUCCESS;
+}
+
+std::istream& safeGetline(std::istream& is, std::string& t)
+{
+	t.clear();
+
+	// The characters in the stream are read one-by-one using a std::streambuf.
+	// That is faster than reading them one-by-one using the std::istream.
+	// Code that uses streambuf this way must be guarded by a sentry object.
+	// The sentry object performs various tasks,
+	// such as thread synchronization and updating the stream state.
+
+	std::istream::sentry se(is, true);
+	std::streambuf* sb = is.rdbuf();
+
+	for (;;) {
+		int c = sb->sbumpc();
+		switch (c) {
+		case '\n':
+			return is;
+		case '\r':
+			if (sb->sgetc() == '\n')
+				sb->sbumpc();
+			return is;
+		case EOF:
+			// Also handle the case when the last line has no line ending
+			if (t.empty())
+				is.setstate(std::ios::eofbit);
+			return is;
+		default:
+			t += (char)c;
+		}
+	}
 }
