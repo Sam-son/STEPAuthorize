@@ -20,12 +20,17 @@ set "certificate=%2.cert"
 set "signature=%2.signature"
 set "signaturedec=%2.sig"
 set "data=%2.tmp"
+set "strip=%data%.stripped"
 set "hash=%2.hash"
 set "pub=%2.pub"
-
-openssl.exe x509 -pubkey -noout -in %certificate% >%pub%
+STEPStrip %data%
+if ERRORLEVEL 1 goto error
+openssl x509 -pubkey -noout -in %certificate% >%pub%
+if ERRORLEVEL 1 goto error
 openssl enc -d -base64 -in %signature% -out %signaturedec%
-openssl.exe dgst -sha256 -verify %pub% -signature %signaturedec% %data%
+if ERRORLEVEL 1 goto error
+openssl dgst -sha256 -verify %pub% -signature %signaturedec% %strip%
+if ERRORLEVEL 1 goto error
 del %certificate% %signature% %signaturedec% %data% %hash% %pub%
 GOTO end
 
@@ -39,11 +44,19 @@ IF "%2"=="/?" GOTO helpsign
 IF "%3"=="" GOTO helpsign
 IF "%4"=="" GOTO helpsign
 
+SET "strip=%2.stripped"
 SET "signsig=%2.sig"
 SET "signsig64=%2.signature"
 SET "outfile=signed_%2"
-openssl dgst -sha256 -sign %3 -out %signsig% %2
+STEPStrip %2
+if ERRORLEVEL 1 goto error
+
+openssl dgst -sha256 -sign %3 -out %signsig% %strip%
+if ERRORLEVEL 1 goto error
+
 openssl enc -base64 -in %signsig% |repl "\n" "\r\n" xm > %signsig64%
+if ERRORLEVEL 1 goto error
+
 copy %2 %outfile% >NUL
 ::Print the Signature to outfile. Looks like:
 ::SIGNATURE;
@@ -69,7 +82,7 @@ echo.>> %outfile%
 echo ENDSEC^;>> %outfile%
 
 ::Done with everything. Delete temporary files.
-del %signsig% %signsig64%
+del %signsig% %signsig64% %strip%
 GOTO end
 
 :helpsign
