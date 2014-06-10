@@ -13,10 +13,11 @@ set "pub="
 
 if "%1"=="VERIFY" GOTO verify
 if "%1"=="SIGN" GOTO sign
+if "%1"=="CSR" GOTO csr
 GOTO usage
 
 :usage
-echo %0 ^[VERIFY^, SIGN^]
+echo %0 ^[CSR^, VERIFY^, SIGN^]
 GOTO end
 
 :verify
@@ -94,6 +95,16 @@ GOTO cleanup
 
 :helpsign
 echo %0 SIGN ^<file to sign^> ^<private key^> ^<certificate^>
+GOTO end
+
+:csr
+if "%2"=="" GOTO helpcsr
+openssl req -new -config cert.conf -out %2.csr -keyout %2-private.key
+if ERRORLEVEL 1 goto error
+GOTO end
+
+:helpcsr
+echo %0 CSR ^<output filename^>
 GOTO end
 
 :error
