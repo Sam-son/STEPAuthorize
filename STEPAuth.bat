@@ -12,8 +12,11 @@ set "data="
 set "pub="
 
 if "%1"=="VERIFY" GOTO verify
+if "%1"=="verify" GOTO verify
 if "%1"=="SIGN" GOTO sign
+if "%1"=="sign" GOTO sign
 if "%1"=="CSR" GOTO csr
+if "%1"=="csr" GOTO csr
 GOTO usage
 
 :usage
