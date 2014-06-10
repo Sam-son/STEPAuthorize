@@ -45,12 +45,17 @@ openssl x509 -in %certificate% -subject -noout -nameopt multiline
 if ERRORLEVEL 1 goto error
 openssl enc -d -base64 -in %signature% -out %signaturedec%
 if ERRORLEVEL 1 goto error
+echo.
+echo.
 echo Verifying certificate^.^.^.
 openssl verify -CAfile root-ca.crt %certificate%
 if ERRORLEVEL 1 goto end
+echo.
+echo.
+
 echo Verifying signature^.^.^.
 openssl dgst -sha256 -verify %pub% -signature %signaturedec% %strip%
-
+echo.
 GOTO cleanup
 
 :helpverify
@@ -89,10 +94,14 @@ echo.>> %outfile%
 ::Print Public key. Gotten right from the certificate. 
 ::Similar to Signature, section begins with:
 ::PUBLIC KEY;
+::Skip this if -old flag isn't set.
+IF NOT "%5"=="-old" GOTO printcert 
 echo PUBLIC KEY^;>> %outfile%
 openssl x509 -pubkey -noout -in %4 |repl "\n" "\r\n" xm >> %outfile%
 echo ENDSEC^;>>%outfile%
 echo.>> %outfile%
+
+:printcert
 ::Print Certificate to file. Begins with:
 ::CERTIFICATE;
 echo CERTIFICATE^;>> %outfile%

@@ -71,6 +71,17 @@ int main(int argc, char *argv[])
 		std::cout << "Error opening public key for writing\n";
 		return EXIT_FAILURE;
 	}
+	bool readcert = false;
+	fname.clear();
+	fname.append(argv[1]);
+	fname.append(".cert");
+	std::ofstream outcert(fname);
+	if (!outcert)
+	{
+		std::cout << "Error opening certificate for writing\n";
+		return EXIT_FAILURE;
+	}
+
 	while (!input.eof() && !input.fail())
 	{
 		safeGetline(input, line);
@@ -85,27 +96,20 @@ int main(int argc, char *argv[])
 			outpub << line;
 			outpub << '\n';
 		}
+		if (line == "CERTIFICATE;") goto cert;	//Horrible hack. If there's no public key we skip it.
 	}
 	if (input.eof() || input.fail())
 	{
 		std::cout << "Malformed Signature\n";
 		return EXIT_FAILURE;
 	}
-	bool readcert = false;
-	fname.clear();
-	fname.append(argv[1]);
-	fname.append(".cert");
-	std::ofstream outcert(fname);
-	if (!outcert)
-	{
-		std::cout << "Error opening certificate for writing\n";
-		return EXIT_FAILURE;
-	}
+
 	while (!input.eof() && !input.fail())
 	{
 		safeGetline(input, line);
 		if (line == "CERTIFICATE;")
 		{
+			cert:
 			readcert = true;
 			safeGetline(input, line);
 		}
