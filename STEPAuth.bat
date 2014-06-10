@@ -1,8 +1,18 @@
 @ECHO OFF
+
+::Initialize all the variables we may use.
 set OPENSSL_CONF=.\openssl.cfg
+set "signsig="
+set "signsig64="
+set "strip="
+set "certificate="
+set "signature="
+set "signaturedec="
+set "data="
+set "pub="
+
 if "%1"=="VERIFY" GOTO verify
 if "%1"=="SIGN" GOTO sign
-
 GOTO usage
 
 :usage
@@ -21,7 +31,6 @@ set "signature=%2.signature"
 set "signaturedec=%2.sig"
 set "data=%2.tmp"
 set "strip=%data%.stripped"
-set "hash=%2.hash"
 set "pub=%2.pub"
 STEPStrip %data%
 if ERRORLEVEL 1 goto error
@@ -30,9 +39,8 @@ if ERRORLEVEL 1 goto error
 openssl enc -d -base64 -in %signature% -out %signaturedec%
 if ERRORLEVEL 1 goto error
 openssl dgst -sha256 -verify %pub% -signature %signaturedec% %strip%
-if ERRORLEVEL 1 goto error
-del %certificate% %signature% %signaturedec% %data% %hash% %pub%
-GOTO end
+
+GOTO cleanup
 
 :helpverify
 echo %0 VERIFY ^<data file^>
@@ -44,13 +52,13 @@ IF "%2"=="/?" GOTO helpsign
 IF "%3"=="" GOTO helpsign
 IF "%4"=="" GOTO helpsign
 
-SET "strip=%2.stripped"
-SET "signsig=%2.sig"
 SET "signsig64=%2.signature"
 SET "outfile=signed_%2"
 STEPStrip %2
 if ERRORLEVEL 1 goto error
 
+SET "strip=%2.stripped"
+SET "signsig=%2.sig"
 openssl dgst -sha256 -sign %3 -out %signsig% %strip%
 if ERRORLEVEL 1 goto error
 
@@ -77,13 +85,12 @@ echo.>> %outfile%
 ::Print Certificate to file. Begins with:
 ::CERTIFICATE;
 echo CERTIFICATE^;>> %outfile%
-type %4>> %outfile%
+openssl x509 -outform pem -in %4 >> %outfile%
 echo.>> %outfile%
 echo ENDSEC^;>> %outfile%
 
 ::Done with everything. Delete temporary files.
-del %signsig% %signsig64% %strip%
-GOTO end
+GOTO cleanup
 
 :helpsign
 echo %0 SIGN ^<file to sign^> ^<private key^> ^<certificate^>
@@ -91,6 +98,18 @@ GOTO end
 
 :error
 echo Program Failure^.
+GOTO cleanup
+
+:cleanup
+::Check if any temporary files exist and remove them.
+IF NOT "%signsig%"=="" del %signsig%
+IF NOT "%signsig64%"=="" del %signsig64%
+IF NOT "%strip%"=="" del %strip%
+IF NOT "%certificate%"=="" del %certificate% 
+IF NOT "%signature%"=="" del %signature% 
+IF NOT "%signaturedec%"=="" del %signaturedec%
+IF NOT "%data%"=="" del %data%
+IF NOT "%pub%"=="" del %pub%
 GOTO end
 
 :end
