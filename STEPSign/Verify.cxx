@@ -83,8 +83,8 @@ int verify_data(std::istream& data, std::istream& sig, std::istream& cert)
 		buf2[inlen] = '\0';
 		buf3.append(buf2);
 	}
-	std::ofstream test("testnot64.txt");
-	test << buf3;
+//	std::ofstream test("testnot64.txt");
+//	test << buf3;
 	result = EVP_VerifyFinal(ctx, (unsigned char*)buf2, length, public_key);
 	EVP_MD_CTX_destroy(ctx);
 
