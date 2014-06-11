@@ -66,7 +66,7 @@ void clean_up()
 }
 
 
-int sign_data(EVP_PKEY *key,std::istream &data_file,char * signature_file)
+int sign_data(EVP_PKEY *key,std::istream &data_file,const char * signature_file)
 {
 	char *data;
 	int data_len;
@@ -133,18 +133,31 @@ int sign_data(EVP_PKEY *key,std::istream &data_file,char * signature_file)
 int main(int argc, char **argv)
 {
 	if (argc < 4) {
-		std::cout <<"Usage: " <<argv[0] <<" <data file> <key file> <signature file>\n";
+		std::cout <<"Usage: " <<argv[0] <<" <data file> <private key file> <certificate file>\n";
 		exit(1);
 	}
 
 	initialize();
+	std::string outname("signed_");
+	outname.append(argv[1]);
 
+	//Open Files for reading and writing.
 	std::ifstream in(argv[1]);
 	if (!in.is_open())
 	{
 		std::cout << "Error opening data file.\n";
 		return EXIT_FAILURE;
 	}
+	std::ofstream outfile(outname, std::ofstream::binary);
+	if (!outfile)
+	{
+		std::cout << "Error opening file for writing.\n";
+		return EXIT_FAILURE;
+	}
+
+	//OPEN THE PRIVATE KEY
+	std::cout << "Reading Private Key... ";
+
 	BIO * bio = BIO_new_file(argv[2], "r");
 	EVP_PKEY *Private = PEM_read_bio_PrivateKey(bio, NULL, password_cb, NULL);
 	if (NULL == Private)
@@ -154,23 +167,22 @@ int main(int argc, char **argv)
 	}
 	BIO_free(bio);
 
-/*	EVP_PKEY * Private = EVP_PKEY_new();
-	if (1 != EVP_PKEY_set1_RSA(Private, PKEY))
+	//OPEN THE CERTIFICATE
+	bio = BIO_new_file(argv[3], "r");
+	X509 *Certificate = X509_new();
+	std::cout << "Reading Certificate...\n";
+	if (NULL == PEM_read_bio_X509(bio, &Certificate, password_cb, NULL))
 	{
 		std::cout << ERR_error_string(ERR_get_error(), NULL) << std::endl;
 		return EXIT_FAILURE;
 	}
-	*/
-	std::ofstream outfile(argv[3]);
-	if (!outfile)
-	{
-		std::cout << "Error opening file for writing.\n";
-		return EXIT_FAILURE;
-	}
-	outfile << in.rdbuf();	//put all of the input into output.
+	BIO_free(bio);
+	//If everything opened OK, then we can start outputting the data. First we fill the output file with the data from input.
+	outfile << in.rdbuf();
 	outfile << "\nSIGNATURE;\n"; //print the signature designator.
 	outfile.close();
 	in.seekg(0, in.beg);	//Reset input stream.
+	//Now we take all the data in the file and put it into a stream, so that we can later use that stream in the digest function.
 	std::stringstream data;
 	while (!in.eof() && !in.fail())
 	{
@@ -180,7 +192,17 @@ int main(int argc, char **argv)
 			data << c;
 		}
 	}
-	int rv=sign_data(Private, data,argv[3]);
+	//Next, we digest the stream and output a base64 encoded signature to the file.
+	int rv=sign_data(Private, data,outname.data());
+	if (rv == EXIT_SUCCESS)
+	{
+		//If we were able to output a signature, then we append a certificate field.
+		FILE * output = _fsopen(outname.data(), "a", _SH_DENYNO);
+		fprintf(output,"\nCERTIFICATE:\n");
+		PEM_write_X509(output, Certificate);
+		fprintf(output, "ENDSEC;\n");
+	}
+	else std::cout << "Error Generating Signature.\n";
 	EVP_PKEY_free(Private);
 	clean_up();
 
