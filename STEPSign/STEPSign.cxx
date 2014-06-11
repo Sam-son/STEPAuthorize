@@ -2,15 +2,7 @@
 #include <string>
 
 #include "Sign.h"
-
-
-
-
-
-int Verify(bool verbose, char * signedfile)
-{
-	return EXIT_SUCCESS;
-}
+#include "Verify.h"
 
 int main(int argc, char **argv)
 {

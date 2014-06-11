@@ -11,11 +11,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CommonFunctions.cxx" />
     <ClCompile Include="Sign.cxx" />
     <ClCompile Include="STEPSign.cxx" />
+    <ClCompile Include="Verify.cxx" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CommonFunctions.h" />
     <ClInclude Include="Sign.h" />
+    <ClInclude Include="Verify.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{07979148-133D-4A15-82D5-71638DFE5A81}</ProjectGuid>
@@ -58,6 +62,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Build-OpenSSL-VC-32-dbg\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;libeay32.lib;Crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

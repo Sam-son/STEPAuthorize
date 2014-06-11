@@ -1,6 +1,3 @@
-#ifndef _SIGN_H_
-#define _SIGN_H_
+#pragma once
 
 int Sign(bool verbose, char * privatekeyfile, char * certificatefile, char * datafile);
-
-#endif

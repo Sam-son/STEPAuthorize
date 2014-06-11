@@ -8,10 +8,10 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/conf.h>
-#include <openssl/engine.h>
 #include <openssl/err.h>
 
 #include "Sign.h"
+#include "CommonFunctions.h"
 
 int password_cb(char *buf, int size, int rwflag, void *userdata)
 {
@@ -39,29 +39,6 @@ int password_cb(char *buf, int size, int rwflag, void *userdata)
 	pwd.pop_back();
 	strncpy_s(buf, size, pwd.c_str(), pwd.size());
 	return pwd.size();
-}
-
-void initialize()
-{
-	OPENSSL_config(NULL);
-	OpenSSL_add_all_digests();
-	OpenSSL_add_all_algorithms();
-	ERR_load_crypto_strings();
-}
-
-void clean_up()
-{
-	ERR_remove_state(0);
-	ERR_free_strings();
-
-	ENGINE_cleanup();
-	EVP_cleanup();
-
-	CONF_modules_finish();
-	CONF_modules_free();
-	CONF_modules_unload(1);
-
-	CRYPTO_cleanup_all_ex_data();
 }
 
 int sign_data(EVP_PKEY *key, std::istream &data_file, const char * signature_file)
