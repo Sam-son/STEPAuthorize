@@ -11,8 +11,8 @@
 #include <openssl/engine.h>
 #include <openssl/err.h>
 
-#pragma comment(lib,"libeay32.lib")
-#pragma comment(lib,"Crypt32.lib")
+//#pragma comment(lib,"libeay32.lib")
+//#pragma comment(lib,"Crypt32.lib")
 
 int password_cb(char *buf, int size, int rwflag, void *userdata)
 {

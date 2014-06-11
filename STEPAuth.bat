@@ -12,7 +12,6 @@ set "data="
 set "pub="
 
 set command=%~1
-echo %command%
 if "%command%"=="VERIFY" GOTO verify
 if "%command%"=="verify" GOTO verify
 if "%command%"=="SIGN" GOTO sign
@@ -74,49 +73,8 @@ IF "%infile%"=="/?" GOTO helpsign
 IF "%privatekey%"=="" GOTO helpsign
 IF "%incert%"=="" GOTO helpsign
 
-SET "signsig64=%infile%.signature"
-SET "outfile=signed_%infile%"
-STEPStrip "%infile%"
-if ERRORLEVEL 1 goto error
-
-SET "strip=%infile%.stripped"
-SET "signsig=%infile%.sig"
-openssl dgst -sha256 -sign "%privatekey%" -out "%signsig%" "%strip%"
-if ERRORLEVEL 1 goto error
-
-openssl enc -base64 -in "%signsig%" |repl "\n" "\r\n" xm > "%signsig64%"
-if ERRORLEVEL 1 goto error
-
-copy "%infile%" "%outfile%" >NUL
-::Print the Signature to outfile. Looks like:
-::SIGNATURE;
-::[bunch of lines of signature stuff]
-::ENDSEC;
-echo.>> "%outfile%"
-echo SIGNATURE^;>> "%outfile%"
-type "%signsig64%">> "%outfile%"
-echo ENDSEC^;>> "%outfile%"
-echo.>> "%outfile%"
-::Print Public key. Gotten right from the certificate. 
-::Similar to Signature, section begins with:
-::PUBLIC KEY;
-::Skip this if -old flag isn't set.
-IF NOT "%5"=="-old" GOTO printcert 
-echo PUBLIC KEY^;>> "%outfile%"
-openssl x509 -pubkey -noout -in "%incert%" |repl "\n" "\r\n" xm >> "%outfile%"
-echo ENDSEC^;>>"%outfile%"
-echo.>> "%outfile%"
-
-:printcert
-::Print Certificate to file. Begins with:
-::CERTIFICATE;
-echo CERTIFICATE^;>> "%outfile%"
-openssl x509 -outform pem -in "%incert%" >> "%outfile%"
-echo.>> "%outfile%"
-echo ENDSEC^;>> "%outfile%"
-
-::Done with everything. Delete temporary files.
-GOTO cleanup
+STEPSign %infile% %privatekey% %incert%
+GOTO end
 
 :helpsign
 echo %0 SIGN ^<file to sign^> ^<private key^> ^<certificate^>
