@@ -8,13 +8,13 @@ int main(int argc, char *argv[])
 {
 	if (argc < 2)
 	{
-		std::cout << "stepbreak.exe input.stp\n";
+		std::cout << "stepbreak.exe input.stp" <<std::endl;
 		return EXIT_FAILURE;
 	}
 	std::ifstream input(argv[1], std::ios::in | std::ios::binary);
 	if (!input)
 	{
-		std::cout << "Error reading file.\n";
+		std::cout << "Error reading file." <<std::endl;
 		return EXIT_FAILURE;
 	}
 	std::string line,fname(argv[1]);
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	fname.clear();
 	if (!tempout)
 	{
-		std::cout << "error opening temporary file for writing.\n";
+		std::cout << "error opening temporary file for writing." <<std::endl;
 		return EXIT_FAILURE;
 	}
 	auto place = input.tellg();
@@ -37,17 +37,17 @@ int main(int argc, char *argv[])
 		if (line != "SIGNATURE;") tempout << std::endl;	//This prevents a trailing \n at the end of the file.
 		input.seekg(place);
 	}
-	if (input.eof())
+	if (input.eof() ||input.fail())
 	{
-		std::cout << "No Signature Found\n";
+		std::cout << "No Signature Found" <<std::endl;
 		return EXIT_FAILURE;
 	}
 	fname.append(argv[1]);
 	fname.append(".signature");
 	std::ofstream outsig(fname);
-	if (!outsig)
+	if (outsig.is_open()==NULL)
 	{
-		std::cout << "Error opening signature output\n";
+		std::cout << "Error opening signature output." <<std::endl;
 		return EXIT_FAILURE;
 	}
 	while (!input.eof() && !input.fail())
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 	}
 	if (input.eof() || input.fail())
 	{
-		std::cout << "Malformed Signature\n";
+		std::cout << "Malformed Signature." <<std::endl;
 		return EXIT_FAILURE;
 	}
 	bool readpub = false;
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 	std::ofstream outpub(fname);
 	if (!outpub)
 	{
-		std::cout << "Error opening public key for writing\n";
+		std::cout << "Error opening public key for writing" <<std::endl;
 		return EXIT_FAILURE;
 	}
 	bool readcert = false;
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 	std::ofstream outcert(fname);
 	if (!outcert)
 	{
-		std::cout << "Error opening certificate for writing\n";
+		std::cout << "Error opening certificate for writing." <<std::endl;
 		return EXIT_FAILURE;
 	}
 
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 	}
 	if (input.eof() || input.fail())
 	{
-		std::cout << "Malformed Signature\n";
+		std::cout << "Malformed Signature." <<std::endl;
 		return EXIT_FAILURE;
 	}
 
@@ -120,9 +120,9 @@ int main(int argc, char *argv[])
 			if (line == "-----END CERTIFICATE-----") break;
 		}
 	}
-	if (input.eof() || input.fail())
+	if (input.fail())
 	{
-		std::cout << "Malformed Signature\n";
+		std::cout << "Malformed Signature." <<std::endl;
 		return EXIT_FAILURE;
 	}
 
