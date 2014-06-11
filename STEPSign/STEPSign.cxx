@@ -136,7 +136,11 @@ int main(int argc, char **argv)
 		std::cout <<"Usage: " <<argv[0] <<" <data file> <private key file> <certificate file>\n";
 		exit(1);
 	}
-
+	bool verbose = false;
+	if (argc>4)
+	{
+		if (std::string(argv[4]) == "-v") verbose = true;
+	}
 	initialize();
 	std::string outname("signed_");
 	outname.append(argv[1]);
@@ -156,7 +160,7 @@ int main(int argc, char **argv)
 	}
 
 	//OPEN THE PRIVATE KEY
-	std::cout << "Reading Private Key... ";
+	if(verbose) std::cout << "Reading Private Key... ";
 
 	BIO * bio = BIO_new_file(argv[2], "r");
 	EVP_PKEY *Private = PEM_read_bio_PrivateKey(bio, NULL, password_cb, NULL);
@@ -170,15 +174,25 @@ int main(int argc, char **argv)
 	//OPEN THE CERTIFICATE
 	bio = BIO_new_file(argv[3], "r");
 	X509 *Certificate = X509_new();
-	std::cout << "Reading Certificate...\n";
+	if(verbose) std::cout << "Reading Certificate...\n";
 	if (NULL == PEM_read_bio_X509(bio, &Certificate, password_cb, NULL))
 	{
 		std::cout << ERR_error_string(ERR_get_error(), NULL) << std::endl;
 		return EXIT_FAILURE;
 	}
 	BIO_free(bio);
+	if (verbose)
+	{
+		char *buf = X509_NAME_oneline(X509_get_subject_name(Certificate), NULL, NULL);
+		std::string comname(buf);
+		auto comnamepos = comname.find("CN=") + 3;
+		comname = comname.substr(comnamepos, comname.size() - comnamepos);
+		std::cout << "Certificate Owner: " << comname << '\n';
+	}
 	//If everything opened OK, then we can start outputting the data. First we fill the output file with the data from input.
+	if(verbose) std::cout << "Writing data to signed file...\n";
 	outfile << in.rdbuf();
+	if(verbose)std::cout << "Writing Signature to signed file...\n";
 	outfile << "\nSIGNATURE;\n"; //print the signature designator.
 	outfile.close();
 	in.seekg(0, in.beg);	//Reset input stream.
@@ -196,6 +210,7 @@ int main(int argc, char **argv)
 	int rv=sign_data(Private, data,outname.data());
 	if (rv == EXIT_SUCCESS)
 	{
+		if (verbose) std::cout << "Signature output, writing Certificate...\n";
 		//If we were able to output a signature, then we append a certificate field.
 		FILE * output = _fsopen(outname.data(), "a", _SH_DENYNO);
 		fprintf(output, "\nCERTIFICATE;\n");

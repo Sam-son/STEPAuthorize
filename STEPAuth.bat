@@ -68,12 +68,13 @@ GOTO end
 set infile=%~2
 set privatekey=%~3
 set incert=%~4
+set verbose=%~5
 IF "%infile%"=="" GOTO helpsign
 IF "%infile%"=="/?" GOTO helpsign
 IF "%privatekey%"=="" GOTO helpsign
 IF "%incert%"=="" GOTO helpsign
 
-STEPSign %infile% %privatekey% %incert%
+STEPSign "%infile%" "%privatekey%" "%incert%" %verbose%
 GOTO end
 
 :helpsign
