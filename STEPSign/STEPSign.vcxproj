@@ -11,7 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Sign.cxx" />
     <ClCompile Include="STEPSign.cxx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Sign.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{07979148-133D-4A15-82D5-71638DFE5A81}</ProjectGuid>

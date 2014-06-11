@@ -74,7 +74,7 @@ IF "%infile%"=="/?" GOTO helpsign
 IF "%privatekey%"=="" GOTO helpsign
 IF "%incert%"=="" GOTO helpsign
 
-STEPSign "%infile%" "%privatekey%" "%incert%" %verbose%
+STEPSign SIGN "%infile%" "%privatekey%" "%incert%" %verbose%
 GOTO end
 
 :helpsign
