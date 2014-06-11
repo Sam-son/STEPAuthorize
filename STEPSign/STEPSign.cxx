@@ -129,24 +129,13 @@ int sign_data(EVP_PKEY *key,std::istream &data_file,const char * signature_file)
 	return EXIT_SUCCESS;
 }
 
-
-int main(int argc, char **argv)
+int Sign(bool verbose, char * privatekeyfile, char * certificatefile, char * datafile)
 {
-	if (argc < 4) {
-		std::cout <<"Usage: " <<argv[0] <<" <data file> <private key file> <certificate file>\n";
-		exit(1);
-	}
-	bool verbose = false;
-	if (argc>4)
-	{
-		if (std::string(argv[4]) == "-v") verbose = true;
-	}
-	initialize();
 	std::string outname("signed_");
-	outname.append(argv[1]);
+	outname.append(datafile);
 
 	//Open Files for reading and writing.
-	std::ifstream in(argv[1]);
+	std::ifstream in(datafile);
 	if (!in.is_open())
 	{
 		std::cout << "Error opening data file.\n";
@@ -160,9 +149,9 @@ int main(int argc, char **argv)
 	}
 
 	//OPEN THE PRIVATE KEY
-	if(verbose) std::cout << "Reading Private Key... ";
+	if (verbose) std::cout << "Reading Private Key... ";
 
-	BIO * bio = BIO_new_file(argv[2], "r");
+	BIO * bio = BIO_new_file(privatekeyfile, "r");
 	EVP_PKEY *Private = PEM_read_bio_PrivateKey(bio, NULL, password_cb, NULL);
 	if (NULL == Private)
 	{
@@ -172,9 +161,9 @@ int main(int argc, char **argv)
 	BIO_free(bio);
 
 	//OPEN THE CERTIFICATE
-	bio = BIO_new_file(argv[3], "r");
+	bio = BIO_new_file(certificatefile, "r");
 	X509 *Certificate = X509_new();
-	if(verbose) std::cout << "Reading Certificate...\n";
+	if (verbose) std::cout << "Reading Certificate...\n";
 	if (NULL == PEM_read_bio_X509(bio, &Certificate, password_cb, NULL))
 	{
 		std::cout << ERR_error_string(ERR_get_error(), NULL) << std::endl;
@@ -190,9 +179,9 @@ int main(int argc, char **argv)
 		std::cout << "Certificate Owner: " << comname << '\n';
 	}
 	//If everything opened OK, then we can start outputting the data. First we fill the output file with the data from input.
-	if(verbose) std::cout << "Writing data to signed file...\n";
+	if (verbose) std::cout << "Writing data to signed file...\n";
 	outfile << in.rdbuf();
-	if(verbose)std::cout << "Writing Signature to signed file...\n";
+	if (verbose)std::cout << "Writing Signature to signed file...\n";
 	outfile << "\nSIGNATURE;\n"; //print the signature designator.
 	outfile.close();
 	in.seekg(0, in.beg);	//Reset input stream.
@@ -207,7 +196,7 @@ int main(int argc, char **argv)
 		}
 	}
 	//Next, we digest the stream and output a base64 encoded signature to the file.
-	int rv=sign_data(Private, data,outname.data());
+	int rv = sign_data(Private, data, outname.data());
 	if (rv == EXIT_SUCCESS)
 	{
 		if (verbose) std::cout << "Signature output, writing Certificate...\n";
@@ -219,6 +208,27 @@ int main(int argc, char **argv)
 	}
 	else std::cout << "Error Generating Signature.\n";
 	EVP_PKEY_free(Private);
+	return rv;
+}
+
+int Verify(bool verbose, char * signedfile)
+{
+	return EXIT_SUCCESS;
+}
+
+int main(int argc, char **argv)
+{
+	if (argc < 4) {
+		std::cout <<"Usage: " <<argv[0] <<" <data file> <private key file> <certificate file>\n";
+		exit(1);
+	}
+	bool verbose = false;
+	if (argc>4)
+	{
+		if (std::string(argv[4]) == "-v") verbose = true;
+	}
+	initialize();
+	int rv=Sign(verbose,argv[2],argv[3],argv[1]);
 	clean_up();
 
 	return rv;
