@@ -198,7 +198,7 @@ int main(int argc, char **argv)
 	{
 		//If we were able to output a signature, then we append a certificate field.
 		FILE * output = _fsopen(outname.data(), "a", _SH_DENYNO);
-		fprintf(output,"\nCERTIFICATE:\n");
+		fprintf(output, "\nCERTIFICATE;\n");
 		PEM_write_X509(output, Certificate);
 		fprintf(output, "ENDSEC;\n");
 	}
