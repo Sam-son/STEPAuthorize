@@ -104,6 +104,23 @@ int sign_data(EVP_PKEY *key, std::istream &data_file, const char * signature_fil
 	return EXIT_SUCCESS;
 }
 
+int new_sign_data(EVP_PKEY *key, std::istream &data_file, X509 * Certificate, const char * outfile)
+{
+	BIO *bio=BIO_new(BIO_s_mem());
+	char data[513];
+	while (!data_file.eof())
+	{
+		data_file.read(data, 512);
+		auto data_len = data_file.gcount();
+		data[data_len] = '\0';
+		BIO_puts(bio, data);
+	}
+	PKCS7 * Signature = PKCS7_sign(Certificate, key, NULL, bio, PKCS7_DETACHED);
+	FILE *out = _fsopen(outfile, "a", _SH_DENYNO);
+	PEM_write_PKCS7(out, Signature);
+	fclose(out);
+	return EXIT_SUCCESS;
+}
 int Sign(bool verbose,bool newmode, char * privatekeyfile, char * certificatefile, char * datafile)
 {
 	initialize();
@@ -157,9 +174,12 @@ int Sign(bool verbose,bool newmode, char * privatekeyfile, char * certificatefil
 	//If everything opened OK, then we can start outputting the data. First we fill the output file with the data from input.
 	if (verbose) std::cout << "Writing data to signed file...\n";
 	outfile << in.rdbuf();
-	if (verbose)std::cout << "Writing Signature to signed file...\n";
-	outfile << "\nSIGNATURE;\n"; //print the signature designator.
-	outfile.close();
+	if (!newmode)
+	{
+		if (verbose)std::cout << "Writing Signature to signed file...\n";
+		outfile << "\nSIGNATURE;\n"; //print the signature designator.
+		outfile.close();
+	}
 	in.seekg(0, in.beg);	//Reset input stream.
 	//Now we take all the data in the file and put it into a stream, so that we can later use that stream in the digest function.
 	std::stringstream data;
@@ -172,17 +192,34 @@ int Sign(bool verbose,bool newmode, char * privatekeyfile, char * certificatefil
 		}
 	}
 	//Next, we digest the stream and output a base64 encoded signature to the file.
-	int rv = sign_data(Private, data, outname.data());
-	if (rv == EXIT_SUCCESS)
+	int rv=EXIT_FAILURE;
+	if (!newmode)
 	{
-		if (verbose) std::cout << "Signature output, writing Certificate...\n";
-		//If we were able to output a signature, then we append a certificate field.
-		FILE * output = _fsopen(outname.data(), "a", _SH_DENYNO);
-		fprintf(output, "\nCERTIFICATE;\n");
-		PEM_write_X509(output, Certificate);
-		fprintf(output, "ENDSEC;\n");
+		rv = sign_data(Private, data, outname.data());
+		if (rv == EXIT_SUCCESS)
+		{
+			if (verbose) std::cout << "Signature output, writing Certificate...\n";
+			//If we were able to output a signature, then we append a certificate field.
+			FILE * output = _fsopen(outname.data(), "a", _SH_DENYNO);
+			fprintf(output, "\nCERTIFICATE;\n");
+			PEM_write_X509(output, Certificate);
+			fprintf(output, "ENDSEC;\n");
+		}
+		else std::cout << "Error Generating Signature.\n";
 	}
-	else std::cout << "Error Generating Signature.\n";
+	else
+	{
+		if (verbose) std::cout << "Writing signature to file...\n";
+		outfile << "\nSIGNATURE;\n";
+		outfile.close();
+		rv = new_sign_data(Private, data, Certificate,outname.c_str());
+		if (rv == EXIT_SUCCESS)
+		{
+			outfile.open(outname,std::ios::binary|std::ios::app);
+			outfile << "ENDSEC;";
+			if (verbose) std::cout << "Signature Successfully written.\n";
+		}
+	}
 	EVP_PKEY_free(Private);
 	clean_up();
 	return rv;

@@ -106,6 +106,29 @@ int verify_data(std::istream& data, std::istream& sig, std::istream& cert,bool v
 	return result;
 }
 
+int new_verify_data(std::istream&data, std::istream&sig, bool verbose) //Sig is a PKCS7 structure.
+{
+	BIO *bio = BIO_new(BIO_s_mem());
+	char buffer[513];
+	while (!data.eof())
+	{
+		data.read(buffer, 512);
+		auto data_len = data.gcount();
+		buffer[data_len] = '\0';
+		BIO_puts(bio, buffer);
+	}
+	BIO *sigBIO= BIO_new(BIO_s_mem());
+	while (!sig.eof())
+	{
+		sig.read(buffer, 512);
+		auto data_len = sig.gcount();
+		buffer[data_len] = '\0';
+		BIO_puts(sigBIO, buffer);
+	}
+	PKCS7 *p7 = PEM_read_bio_PKCS7(sigBIO, NULL, NULL, NULL);
+	return PKCS7_verify(p7, NULL, NULL, bio, NULL, PKCS7_NOVERIFY);
+}
+
 std::istream& safeGetline(std::istream& is, std::string& t)
 {
 	t.clear();
@@ -140,8 +163,8 @@ std::istream& safeGetline(std::istream& is, std::string& t)
 }
 
 
-//Given an input, breaks up the data, signature, and certificate. Theoretically useless if we have a PCKS7 signature field...
-int Break(std::istream& input, std::ostream& data,std::ostream& sig, std::ostream& cert)
+//Given an input, breaks up the data, signature, and certificate. If newmode is set, then we skip separating out the certificate(since it's in the PKCS7 field)
+int Break(bool newmode,std::istream& input, std::ostream& data,std::ostream& sig, std::ostream& cert)
 {
 	auto place = input.tellg();
 	std::string line;
@@ -171,6 +194,7 @@ int Break(std::istream& input, std::ostream& data,std::ostream& sig, std::ostrea
 		std::cout << "Malformed Signature." << std::endl;
 		return EXIT_FAILURE;
 	}
+	if (newmode) return EXIT_SUCCESS;
 	bool readcert=false;
 	while (!input.eof() && !input.fail())
 	{
@@ -209,7 +233,7 @@ int Verify(bool verbose,bool newmode, char * signedfile)
 		sig(std::ios::in | std::ios::out | std::ios::binary),
 		cert(std::ios::in | std::ios::out | std::ios::binary),
 		stripped(std::ios::in | std::ios::out | std::ios::binary);
-	if (EXIT_FAILURE == Break(input, data, sig, cert))
+	if (EXIT_FAILURE == Break(newmode,input, data, sig, cert))	//if newmode is true, then cert will be empty.
 		return EXIT_FAILURE;
 	while (!data.eof() && !data.fail())
 	{
@@ -219,15 +243,26 @@ int Verify(bool verbose,bool newmode, char * signedfile)
 			stripped << c;
 		}
 	}
-	std::ofstream test("testprebuf.txt");
-	test << stripped.rdbuf();
 	stripped.seekg(0, stripped.beg);
-	if (1 != verify_data(stripped, sig, cert,verbose))
+	int rv = EXIT_SUCCESS;
+	if (newmode)
 	{
-		std::cout << "Verification Failure." << std::endl;
-		return EXIT_FAILURE;
+		if (1 != new_verify_data(stripped, sig, verbose))
+		{
+			std::cout << "Verification Failure." << std::endl;
+			rv=EXIT_FAILURE;
+		}
+		else std::cout << "Verified Successfully!";
 	}
-	std::cout << "Verified Successfully!";
+	else
+	{
+		if (1 != verify_data(stripped, sig, cert, verbose))
+		{
+			std::cout << "Verification Failure." << std::endl;
+			rv=EXIT_FAILURE;
+		}
+		else std::cout << "Verified Successfully!";
+	}
 	clean_up();
-	return EXIT_SUCCESS;
+	return rv;
 }
