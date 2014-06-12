@@ -26,11 +26,13 @@ GOTO end
 
 :verify
 set infile=%~2
+set verbose=%~3
+
 if "%infile%"=="/?" GOTO helpverify
 if "%infile%"=="" GOTO helpverify
 
 echo Verifying signature^.^.^.
-STEPSign VERIFY "%infile%"
+STEPSign VERIFY "%infile%" "%verbose%"
 GOTO cleanup
 
 :helpverify

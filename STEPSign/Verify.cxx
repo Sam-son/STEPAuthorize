@@ -13,7 +13,7 @@
 #include "Verify.h"
 #include "CommonFunctions.h"
 
-int verify_data(std::istream& data, std::istream& sig, std::istream& cert)
+int verify_data(std::istream& data, std::istream& sig, std::istream& cert,bool verbose)
 {
 	EVP_PKEY *public_key;
 	BIO *bio = BIO_new(BIO_s_mem());
@@ -49,6 +49,14 @@ int verify_data(std::istream& data, std::istream& sig, std::istream& cert)
 	{
 		std::cout << ERR_error_string(ERR_get_error(), NULL) << std::endl;
 		return EXIT_FAILURE;
+	}
+	if (verbose)
+	{
+		char *buf = X509_NAME_oneline(X509_get_subject_name(Certificate), NULL, NULL);
+		std::string comname(buf);
+		auto comnamepos = comname.find("CN=") + 3;
+		comname = comname.substr(comnamepos, comname.size() - comnamepos);
+		std::cout << "Signed by: " << comname << '\n';
 	}
 	data.read(buffer, 1024);
 	int data_len = data.gcount();
@@ -214,7 +222,7 @@ int Verify(bool verbose, char * signedfile)
 	std::ofstream test("testprebuf.txt");
 	test << stripped.rdbuf();
 	stripped.seekg(0, stripped.beg);
-	if (1 != verify_data(stripped, sig, cert))
+	if (1 != verify_data(stripped, sig, cert,verbose))
 	{
 		std::cout << "Verification Failure." << std::endl;
 		return EXIT_FAILURE;
