@@ -32,7 +32,7 @@ if "%infile%"=="/?" GOTO helpverify
 if "%infile%"=="" GOTO helpverify
 
 echo Verifying signature^.^.^.
-STEPSign VERIFY "%infile%" "%verbose%"
+STEPSign VERIFY "%infile%" "%verbose%" -new
 GOTO cleanup
 
 :helpverify
@@ -49,7 +49,7 @@ IF "%infile%"=="/?" GOTO helpsign
 IF "%privatekey%"=="" GOTO helpsign
 IF "%incert%"=="" GOTO helpsign
 
-STEPSign SIGN "%infile%" "%privatekey%" "%incert%" %verbose%
+STEPSign SIGN "%infile%" "%privatekey%" "%incert%" %verbose% -new
 GOTO end
 
 :helpsign
