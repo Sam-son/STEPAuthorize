@@ -196,7 +196,7 @@ int Break(std::istream& input, std::ostream& data,std::ostream& sig, std::ostrea
 	return EXIT_SUCCESS;
 }
 
-int Verify(bool verbose, char * signedfile)
+int Verify(bool verbose,bool newmode, char * signedfile)
 {
 	initialize();
 	std::ifstream input(signedfile, std::istream::in | std::ifstream::binary);

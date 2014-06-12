@@ -104,7 +104,7 @@ int sign_data(EVP_PKEY *key, std::istream &data_file, const char * signature_fil
 	return EXIT_SUCCESS;
 }
 
-int Sign(bool verbose,int mode, char * privatekeyfile, char * certificatefile, char * datafile)
+int Sign(bool verbose,bool newmode, char * privatekeyfile, char * certificatefile, char * datafile)
 {
 	initialize();
 	std::string outname("signed_");

@@ -26,19 +26,29 @@ int main(int argc, char **argv)
 	bool verbose = false;
 	if (mode == "SIGN" || mode == "sign")
 	{
+		bool newmode = false;
 		if (argc>4)
 		{
-			if (std::string(argv[4]) == "-v") verbose = true;
+			for (int i = 4; i < argc; i++)
+			{
+				if (std::string(argv[i]) == "-v") verbose = true;
+				if (std::string(argv[i]) == "-new") newmode = true;
+			}
 		}
-		rv = Sign(verbose, argv[3], argv[4], argv[2]);
+		rv = Sign(verbose, newmode,argv[3], argv[4], argv[2]);
 	}
 	if (mode == "VERIFY" || mode == "verify")
 	{
+		bool newmode = false;
 		if (argc > 3)
 		{
-			if (std::string(argv[3]) == "-v") verbose = true;
+			for (int i = 3; i < argc; i++)
+			{
+				if (std::string(argv[i]) == "-v") verbose = true;
+				if (std::string(argv[i]) == "-new") newmode= true;
+			}
 		}
-		rv = Verify(verbose, argv[2]);
+		rv = Verify(verbose, newmode,argv[2]);
 	}
 	return rv;
 }
