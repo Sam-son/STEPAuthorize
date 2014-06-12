@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include <openssl/pkcs7.h>
 #include <openssl/bio.h>
@@ -74,18 +75,21 @@ int verify_data(std::istream& data, std::istream& sig, std::istream& cert)
 	bio = BIO_new(BIO_s_mem());
 	BIO_write(bio, sigbuf, length);
 	bio = BIO_push(b64, bio);
-	std::cout << sigbuf;// << "\n\n";
 	char*buf2 = new char[length + 1];
-	std::string buf3;
+	std::vector<unsigned char> buf3;
 	int inlen = 0;
-	while ((inlen = BIO_read(bio, buf2, length)) > 0)	//FIXME: figure out why the entire decoded info isn't there.
+	int inl=0;
+	for (;;)
 	{
-		buf2[inlen] = '\0';
-		buf3.append(buf2);
+		inl = BIO_read(bio, buf2, length);
+		if (inl <= 0) break;
+		for (int i = 0; i < inl; i++)
+		{
+			buf3.push_back(buf2[i]);
+		}
 	}
-//	std::ofstream test("testnot64.txt");
-//	test << buf3;
-	result = EVP_VerifyFinal(ctx, (unsigned char*)buf2, length, public_key);
+
+	result = EVP_VerifyFinal(ctx, buf3.data(), buf3.size(), public_key);
 	EVP_MD_CTX_destroy(ctx);
 
 	delete[] buf2;
