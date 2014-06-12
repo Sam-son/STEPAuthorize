@@ -29,35 +29,8 @@ set infile=%~2
 if "%infile%"=="/?" GOTO helpverify
 if "%infile%"=="" GOTO helpverify
 
-StepBreak "%infile%"
-if ERRORLEVEL 1 goto error
-
-set "certificate=%infile%.cert"
-set "signature=%infile%.signature"
-set "signaturedec=%infile%.sig"
-set "data=%infile%.tmp"
-set "strip=%data%.stripped"
-set "pub=%infile%.pub"
-STEPStrip "%data%"
-if ERRORLEVEL 1 goto error
-openssl x509 -pubkey -noout -in "%certificate%" >"%pub%"
-IF ERRORLEVEL 1 GOTO error
-::Print Subject
-openssl x509 -in "%certificate%" -subject -noout -nameopt multiline
-if ERRORLEVEL 1 goto error
-openssl enc -d -base64 -in "%signature%" -out "%signaturedec%"
-if ERRORLEVEL 1 goto error
-echo.
-echo.
-echo Verifying certificate^.^.^.
-openssl verify -CAfile root-ca.crt "%certificate%"
-if ERRORLEVEL 1 goto end
-echo.
-echo.
-
 echo Verifying signature^.^.^.
-openssl dgst -sha256 -verify "%pub%" -signature "%signaturedec%" "%strip%"
-echo.
+STEPSign VERIFY "%infile%"
 GOTO cleanup
 
 :helpverify
