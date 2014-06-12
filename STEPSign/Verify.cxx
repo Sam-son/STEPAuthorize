@@ -9,6 +9,7 @@
 #include <openssl/x509.h>
 #include <openssl/conf.h>
 #include <openssl/err.h>
+#include <openssl/safestack.h>
 
 #include "Verify.h"
 #include "CommonFunctions.h"
@@ -126,7 +127,20 @@ int new_verify_data(std::istream&data, std::istream&sig, bool verbose) //Sig is 
 		BIO_puts(sigBIO, buffer);
 	}
 	PKCS7 *p7 = PEM_read_bio_PKCS7(sigBIO, NULL, NULL, NULL);
-	//auto x509s = PKCS7_get0_signers(p7, NULL, NULL);
+	if (verbose)
+	{
+		auto x509s = PKCS7_get0_signers(p7, NULL, NULL);
+		int numcerts = sk_X509_num(x509s);
+		for (int i = 0; i < numcerts; i++)
+		{
+			auto cert = sk_X509_value(x509s, i);
+			char *buf = X509_NAME_oneline(X509_get_subject_name(cert), NULL, NULL);
+			std::string comname(buf);
+			auto comnamepos = comname.find("CN=") + 3;
+			comname = comname.substr(comnamepos, comname.size() - comnamepos);
+			std::cout << "Signed by: " << comname << '\n';
+		}
+	}
 	return PKCS7_verify(p7, NULL, NULL, bio, NULL, PKCS7_NOVERIFY);	//NOVERIFY means don't check the certificate chain. We handle that in a separate function.
 }
 
