@@ -126,7 +126,8 @@ int new_verify_data(std::istream&data, std::istream&sig, bool verbose) //Sig is 
 		BIO_puts(sigBIO, buffer);
 	}
 	PKCS7 *p7 = PEM_read_bio_PKCS7(sigBIO, NULL, NULL, NULL);
-	return PKCS7_verify(p7, NULL, NULL, bio, NULL, PKCS7_NOVERIFY);
+	//auto x509s = PKCS7_get0_signers(p7, NULL, NULL);
+	return PKCS7_verify(p7, NULL, NULL, bio, NULL, PKCS7_NOVERIFY);	//NOVERIFY means don't check the certificate chain. We handle that in a separate function.
 }
 
 std::istream& safeGetline(std::istream& is, std::string& t)
