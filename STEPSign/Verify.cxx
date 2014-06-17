@@ -151,8 +151,8 @@ int new_verify_data(std::istream&data, std::istream&sig, bool verbose) //Sig is 
 		int allowed = X509_verify_cert(store);
 		if (1!=allowed)
 		{
-			std::cout << "Certificate not part of trusted chain.\n";
-			return -1;
+			std::cout << "Certification Failure. Certificate not part of trusted chain.\n";
+			//return -1;
 		}
 
 		if (verbose)
