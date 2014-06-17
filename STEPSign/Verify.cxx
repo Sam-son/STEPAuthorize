@@ -14,6 +14,8 @@
 #include "Verify.h"
 #include "CommonFunctions.h"
 
+#define ROOT "root-ca.crt"
+
 int verify_data(std::istream& data, std::istream& sig, std::istream& cert,bool verbose)
 {
 	EVP_PKEY *public_key;
@@ -107,7 +109,7 @@ int verify_data(std::istream& data, std::istream& sig, std::istream& cert,bool v
 	return result;
 }
 
-int new_verify_data(std::istream&data, std::istream&sig, bool verbose) //Sig is a PKCS7 structure.
+int new_verify_data(std::istream&data, std::istream&sig, bool verbose) //Sig is a PKCS7 structure. Returns 1 on signature verified, 0 on signature not verified, -1 on failure.
 {
 	BIO *bio = BIO_new(BIO_s_mem());
 	char buffer[513];
@@ -127,20 +129,43 @@ int new_verify_data(std::istream&data, std::istream&sig, bool verbose) //Sig is 
 		BIO_puts(sigBIO, buffer);
 	}
 	PKCS7 *p7 = PEM_read_bio_PKCS7(sigBIO, NULL, NULL, NULL);
-	if (verbose)
+	X509_STORE_CTX * store= X509_STORE_CTX_new();			//The structure which will hold the certifiates we need to use to verify the chain.
+	auto x509s = PKCS7_get0_signers(p7, NULL, NULL);		//Get the list of signers from the PKCS7 field
+	int numcerts = sk_X509_num(x509s);						//Usually only one signer. Be safe, we'll check all of them
+	BIO * rootbio = BIO_new_file(ROOT, "r");				//Load the root certificate, for checking the signers against.
+	X509 * rootcert = PEM_read_bio_X509(rootbio, NULL, NULL, NULL);
+	if (NULL == rootcert)
 	{
-		auto x509s = PKCS7_get0_signers(p7, NULL, NULL);
-		int numcerts = sk_X509_num(x509s);
-		for (int i = 0; i < numcerts; i++)
+		std::cout << ERR_error_string(ERR_get_error(), NULL) << std::endl;
+		return -1;
+	}
+	stack_st_X509 * trusted = sk_X509_new_null();
+	sk_X509_push(trusted, rootcert);						//The trusted certificate stack contains only the root certificate in our case. Maybe it could be a list of trusted certificates, so we could add that here-ish.
+	X509_STORE_CTX_init(store, NULL, NULL, NULL);
+	X509_STORE_CTX_trusted_stack(store, trusted);			//Now the context knows what's trusted.
+	
+	for (int i = 0; i < numcerts; i++)						//Loop through all the certificates and check if they are signed by the root certificate.
+	{
+		auto cert = sk_X509_value(x509s, i);										
+		X509_STORE_CTX_set_cert(store, cert);
+		int allowed = X509_verify_cert(store);
+		if (1!=allowed)
 		{
-			auto cert = sk_X509_value(x509s, i);
+			std::cout << "Certificate not part of trusted chain.\n";
+			return -1;
+		}
+
+		if (verbose)
+		{
 			char *buf = X509_NAME_oneline(X509_get_subject_name(cert), NULL, NULL);
 			std::string comname(buf);
 			auto comnamepos = comname.find("CN=") + 3;
 			comname = comname.substr(comnamepos, comname.size() - comnamepos);
 			std::cout << "Signed by: " << comname << '\n';
+			if (1==allowed)
+				std::cout << comname << " is properly authorized to sign files.\n";
 		}
-	}
+	}		
 	return PKCS7_verify(p7, NULL, NULL, bio, NULL, PKCS7_NOVERIFY);	//NOVERIFY means don't check the certificate chain. We handle that in a separate function.
 }
 
@@ -271,12 +296,19 @@ int Verify(bool verbose,bool newmode, char * signedfile)
 	}
 	else
 	{
-		if (1 != verify_data(stripped, sig, cert, verbose))
+		int verifyrv=verify_data(stripped, sig, cert, verbose);
+		if (1 == verifyrv)
 		{
-			std::cout << "Verification Failure." << std::endl;
-			rv=EXIT_FAILURE;
+			std::cout << "Verified Successfully!"; 
 		}
-		else std::cout << "Verified Successfully!";
+		else
+		{
+			rv = EXIT_FAILURE;
+			if (0 == verifyrv)
+				std::cout << "File does not match Signature. Verification Failure." << std::endl;
+			else
+				std::cout << "Unable to Verify." <<std::endl;
+		}
 	}
 	clean_up();
 	return rv;
